@@ -9,7 +9,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const lambdaDecorationType = vscode.window.createTextEditorDecorationType({
 		before: {
 			contentText: 'λ',
-			// color: 'rgba(0,0,0,0.3)',
 		},
 		textDecoration: 'none; display: none;',
 	});
@@ -39,15 +38,14 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions
 	);
 
-	// vscode.workspace.onDidChangeTextDocument(
-	// 	(event) => {
-	// 		if (editor && event.document === editor.document) {
-	// 			updateDecorations();
-	// 		}
-	// 	},
-	// 	null,
-	// 	context.subscriptions
-	// );
+	vscode.workspace.onDidChangeTextDocument(
+		(event) => {
+			vscode.window.activeTextEditor 
+			&& updateDecorations(vscode.window.activeTextEditor);
+		},
+		null,
+		context.subscriptions
+	);
 
 	context.subscriptions.push(disposable);
 }
