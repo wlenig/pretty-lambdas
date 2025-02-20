@@ -1,9 +1,16 @@
 import * as vscode from 'vscode';
 
+let decorationsEnabled = true;
+
 export function activate(context: vscode.ExtensionContext) {
-	const disposable = vscode.commands.registerCommand('pretty-lambdas.toggle', () => {
-		// TODO: Toggle decorations
-		vscode.window.showInformationMessage('Hello World from pretty-lambdas!');
+	const toggleCommand = vscode.commands.registerCommand('pretty-lambdas.toggle', () => {
+		decorationsEnabled = !decorationsEnabled;
+		vscode.window.showInformationMessage(
+			`Pretty Lambdas ${decorationsEnabled ? 'enabled' : 'disabled'}`
+		);
+		if (vscode.window.activeTextEditor) {
+			updateDecorations(vscode.window.activeTextEditor);
+		}
 	});
 
 	const lambdaDecorationType = vscode.window.createTextEditorDecorationType({
@@ -13,13 +20,25 @@ export function activate(context: vscode.ExtensionContext) {
 		textDecoration: 'none; display: none;',
 	});
 
-	function updateDecorations(editor: vscode.TextEditor) {
+	async function updateDecorations(editor: vscode.TextEditor) {
+		// Clear decorations if disabled
+		if (!decorationsEnabled) {
+			editor.setDecorations(lambdaDecorationType, []);
+			return;
+		}
+
+		// Only process Python files
+		if (editor.document.languageId !== 'python') {
+			return;
+		}
+
 		const text = editor.document.getText();
-		const lambdaRegex = /lambda/g;
+		const lambdaRegex = /\blambda\b/g;
 		const lambdaMatches: vscode.DecorationOptions[] = [];
 
 		let match;
 
+		// Find matches of lambda keyword
 		while ((match = lambdaRegex.exec(text))) {
 			const startPos = editor.document.positionAt(match.index);
 			const endPos = editor.document.positionAt(match.index + match[0].length);
@@ -62,7 +81,12 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions
     );
 
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(toggleCommand);
+
+	// Do initial update on startup
+	if (vscode.window.activeTextEditor) {
+		updateDecorations(vscode.window.activeTextEditor);
+	}
 }
 
 // This method is called when your extension is deactivated
