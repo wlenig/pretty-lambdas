@@ -27,7 +27,14 @@ export function activate(context: vscode.ExtensionContext) {
 			lambdaMatches.push(decoration);
 		}
 
-		editor.setDecorations(lambdaDecorationType, lambdaMatches);
+		const selections = editor.selections;
+
+		// Filter out matches that are within selections
+		const filteredMatches = lambdaMatches.filter((match) =>
+			!selections.some((selection) => match.range.contains(selection))
+		);
+
+		editor.setDecorations(lambdaDecorationType, filteredMatches);
 	}
 
 	vscode.window.onDidChangeActiveTextEditor(
@@ -46,6 +53,14 @@ export function activate(context: vscode.ExtensionContext) {
 		null,
 		context.subscriptions
 	);
+
+	vscode.window.onDidChangeTextEditorSelection(
+        (event) => {
+            updateDecorations(event.textEditor);
+        },
+        null,
+        context.subscriptions
+    );
 
 	context.subscriptions.push(disposable);
 }
